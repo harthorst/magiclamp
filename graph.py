@@ -1,12 +1,17 @@
-from graphics import *
-from random import randint
-from magiclamp import *
 from PIL import Image, ImageDraw, ImageTk, ImageStat
+from random import randint
+import time
+
+from graphics import GraphWin, Circle, Point, color_rgb
+from lmgraphics.pointgenerator import PointGenerator
+from magiclamp import *
+
 
 class Graph:
-    bars = []
-    canvas = {}
+    bars = None
+    canvas = None
     im = Image.open("asterisk-main.jpg")
+    pg = PointGenerator()
     
     def initMLCanvas(self):
         numLeds = 240
@@ -23,15 +28,15 @@ class Graph:
         
         for i in range(numLeds):
             # todo: modulo
-            if currentRowPixelCount>pixelPerRow:
+            if currentRowPixelCount > pixelPerRow:
                 currentRowPixelCount = 0
                 x = 0
             
-            pix = MLPixel(x + incX/2, y + incX/2, MLColor(0, 0, 0))
+            pix = MLPixel(x + incX / 2, y + incX / 2, MLColor(0, 0, 0))
             y = y + incY
             x = x + incX
-            if maxX<x:
-                maxX=x
+            if maxX < x:
+                maxX = x
             currentRowPixelCount = currentRowPixelCount + 1
             
             pixels.append(pix)
@@ -41,15 +46,16 @@ class Graph:
         
     
     def openWindow(self):
-        self.win = GraphWin('Analyzer', 600, 800) # give title and dimensions
+        self.win = GraphWin('Analyzer', 600, 800)  # give title and dimensions
         self.win.autoflush = False
         self.initMLCanvas()
 
     def update(self, values):
-        im = self.im.rotate(time.time()*10)
+        im = self.im.rotate(time.time() * 10)
+        self.pg.update(im, values);
         
-        #self.updateAnalyzer(values)
-        #self.updateFX(values)
+        # self.updateAnalyzer(values)
+        # self.updateFX(values)
         self.updateSimulator(im)
         self.drawPIL(im)
 
@@ -60,11 +66,11 @@ class Graph:
             item.undraw()
             
         for value in values:
-            rectangle = Rectangle(Point((i * 10) + 2 , 0), Point((i+1)*10,value))
+            rectangle = Rectangle(Point((i * 10) + 2 , 0), Point((i + 1) * 10, value))
             rectangle.setFill("yellow")
             rectangle.draw(self.win)
-            #rectangle.
-            i = i+1
+            # rectangle.
+            i = i + 1
             
         self.win.flush()
         
@@ -79,15 +85,17 @@ class Graph:
         self.win.flush()
         
     def getPixelValue(self, pixel, im):
+        pixHalfSize = 10
+        
         print "x", pixel.x, "im.x", im.size[0], "c.x", self.canvas.width 
         xOnImg = (pixel.x * im.size[0]) / self.canvas.width
         yOnImg = (pixel.y * im.size[1]) / self.canvas.height
         print "xOnImg:", xOnImg, "yOnImg:", yOnImg
         
-        region = im.crop([xOnImg-2,yOnImg-2,xOnImg+2,yOnImg+2])
-        #tkImg = ImageTk.PhotoImage(image=region)
-        #self.win.create_image(550, 450, image=tkImg)
-        #self.win.flush()
+        region = im.crop([xOnImg - pixHalfSize, yOnImg - pixHalfSize, xOnImg + pixHalfSize, yOnImg + pixHalfSize])
+        # tkImg = ImageTk.PhotoImage(image=region)
+        # self.win.create_image(550, 450, image=tkImg)
+        # self.win.flush()
         imStat = ImageStat.Stat(region)
         print "mean:", imStat.mean
         
@@ -100,7 +108,7 @@ class Graph:
 
     def drawCircle(self, value):
         print "drawing circle"
-        circle = Circle(Point(randint(0, self.win.getWidth()),randint(0, self.win.getHeight())), value)
+        circle = Circle(Point(randint(0, self.win.getWidth()), randint(0, self.win.getHeight())), value)
         circle.setFill("red")
         circle.draw(self.win)
         self.win.flush()
