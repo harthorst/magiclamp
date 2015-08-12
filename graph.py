@@ -1,21 +1,32 @@
 from PIL import Image, ImageDraw, ImageTk, ImageStat
+import numpy
 from random import randint
 import time
 
-from graphics import GraphWin, Circle, Point, color_rgb
 from lmgraphics.pointgenerator import PointGenerator
 from magiclamp import *
+from neopixel import *
 
+
+# from graphics import GraphWin, Circle, Point, color_rgb, Rectangle
+LED_PIN = 18  # GPIO pin connected to the pixels (must support PWM!).
+LED_FREQ_HZ = 800000  # LED signal frequency in hertz (usually 800khz)
+LED_DMA = 5  # DMA channel to use for generating signal (
+LED_BRIGHTNESS = 55  # Set to 0 for darkest and 255 for brightest
+LED_INVERT = False  # True to invert the signal (when using NPN transistor level shift)
+LED_COUNT = 240  # Number of LED pixels.
 
 class Graph:
     bars = None
     canvas = None
-    im = Image.open("asterisk-main.jpg")
+    # im = Image.open("asterisk-main.jpg")
+    im = Image.open("bar.jpg")
     pg = PointGenerator()
+    strip = None
     
     def initMLCanvas(self):
-        numLeds = 240
-        pixelPerRow = 10
+        numLeds = LED_COUNT
+        pixelPerRow = 14
         incY = 1
         incX = 15
         pixels = []
@@ -29,8 +40,12 @@ class Graph:
         for i in range(numLeds):
             # todo: modulo
             if currentRowPixelCount > pixelPerRow:
-                currentRowPixelCount = 0
-                x = 0
+                if ((i / pixelPerRow) % 2 == 0):
+                    currentRowPixelCount = 0
+                    x = 0
+                else:
+                    currentRowPixelCount = 1
+                    x = int(incX / 2)
             
             pix = MLPixel(x + incX / 2, y + incX / 2, MLColor(0, 0, 0))
             y = y + incY
@@ -44,20 +59,26 @@ class Graph:
         self.canvas = MLCanvas(maxX, y)
         self.canvas.pixels = pixels
         
+        # Create NeoPixel object with appropriate configuration.
+        self.strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
+        # Intialize the library (must be called once before other functions).
+        self.strip.begin()
+        
     
     def openWindow(self):
-        self.win = GraphWin('Analyzer', 600, 800)  # give title and dimensions
-        self.win.autoflush = False
+        # self.win = GraphWin('Analyzer', 600, 800)  # give title and dimensions
+        # self.win.autoflush = False
         self.initMLCanvas()
 
     def update(self, values):
-        im = self.im.rotate(time.time() * 10)
+        im = self.im.rotate(time.time() * 20)
         self.pg.update(im, values);
         
         # self.updateAnalyzer(values)
         # self.updateFX(values)
-        self.updateSimulator(im)
-        self.drawPIL(im)
+        self.updateLEDs(im)
+        # self.updateSimulator(im)
+        # self.drawPIL(im)
 
     def updateAnalyzer(self, values):
         
@@ -74,6 +95,21 @@ class Graph:
             
         self.win.flush()
         
+    def updateLEDs(self, im):
+        startTime = time.time() * 1000.0
+        print "update start"
+        for i in range(len(self.canvas.pixels)):
+            pixel = self.canvas.pixels[i]
+            # print "calculating pixel", pixel.x, pixel.y, i
+            rgb = self.getPixelValue(pixel, im)
+            self.strip.setPixelColor(i, Color(int(rgb[0]), int(rgb[1]), int(rgb[2])))
+            
+        # self.strip.setPixelColor(10, Color(255, 255, 255))
+        usedTime = (time.time() * 1000.0) - startTime
+        self.strip.show()
+        print "update stop, used time=%s" % (usedTime)
+        # time.sleep(50 / 1000)
+        
     def updateSimulator(self, im):
         for pixel in self.canvas.pixels:
             print "calculating pixel", pixel.x, pixel.y
@@ -85,19 +121,41 @@ class Graph:
         self.win.flush()
         
     def getPixelValue(self, pixel, im):
+        # return [randint(0, 255), randint(0, 255), randint(0, 255)]
+        
+        # pixHalfSize = 10
         pixHalfSize = 10
         
-        print "x", pixel.x, "im.x", im.size[0], "c.x", self.canvas.width 
+        # print "x", pixel.x, "im.x", im.size[0], "c.x", self.canvas.width 
         xOnImg = (pixel.x * im.size[0]) / self.canvas.width
         yOnImg = (pixel.y * im.size[1]) / self.canvas.height
-        print "xOnImg:", xOnImg, "yOnImg:", yOnImg
+        # print "xOnImg:", xOnImg, "yOnImg:", yOnImg
         
         region = im.crop([xOnImg - pixHalfSize, yOnImg - pixHalfSize, xOnImg + pixHalfSize, yOnImg + pixHalfSize])
         # tkImg = ImageTk.PhotoImage(image=region)
         # self.win.create_image(550, 450, image=tkImg)
         # self.win.flush()
-        imStat = ImageStat.Stat(region)
-        print "mean:", imStat.mean
+        # imStat = ImageStat.Stat(region)
+        
+        # colors = region.getcolors()
+        
+        # colors[0][1]
+        # region.thumbnail((1, 1), resample=1)
+        
+        colors = region.getcolors()
+        r = 0
+        g = 0
+        b = 0
+        count = 0
+        for i in range(len(colors)):
+            c, rgb = colors[i]
+            r += c * rgb[0]
+            g += c * rgb[1]
+            b += c * rgb[2]
+            count += c
+            
+        
+        return [int(r / count), int(g / count), int(b / count)]
         
         return imStat.mean
         
