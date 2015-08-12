@@ -18,11 +18,12 @@ import sys
 import time
 
 from graph import Graph
+from ledrenderer import LEDRenderer
 
 
 MAX = 0
 LEVELS = 20
-graph = Graph()
+graph = None
 
 def list_devices():
     # List all audio input devices
@@ -35,7 +36,11 @@ def list_devices():
             print str(i) + '. ' + dev['name']
         i += 1
 
-def arduino_soundlight(): 
+def start(): 
+    # init Graph
+    ledRenderer = LEDRenderer()
+    graph = Graph([ledRenderer])
+    
     chunk = 2 ** 12  # Change if too fast/slow, never less than 2**11
     scale = 80  # Change if too dim/bright
     exponent = 2  # Change if too little/too much difference between loud and quiet sounds
@@ -125,4 +130,4 @@ def calculate_levels(data, chunk, samplerate):
 
 if __name__ == '__main__':
     # list_devices()
-    arduino_soundlight()
+    start()

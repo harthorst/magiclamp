@@ -5,16 +5,10 @@ import time
 
 from lmgraphics.pointgenerator import PointGenerator
 from magiclamp import *
-from neopixel import *
 
 
-# from graphics import GraphWin, Circle, Point, color_rgb, Rectangle
-LED_PIN = 18  # GPIO pin connected to the pixels (must support PWM!).
-LED_FREQ_HZ = 800000  # LED signal frequency in hertz (usually 800khz)
-LED_DMA = 5  # DMA channel to use for generating signal (
-LED_BRIGHTNESS = 55  # Set to 0 for darkest and 255 for brightest
-LED_INVERT = False  # True to invert the signal (when using NPN transistor level shift)
-LED_COUNT = 240  # Number of LED pixels.
+renderers = None
+
 
 class Graph:
     bars = None
@@ -24,8 +18,11 @@ class Graph:
     pg = PointGenerator()
     strip = None
     
+    def __init__(self, renderers):
+        self.renderers = renderers
+    
     def initMLCanvas(self):
-        numLeds = LED_COUNT
+        numLeds = 240
         pixelPerRow = 14
         incY = 1
         incX = 15
@@ -59,10 +56,7 @@ class Graph:
         self.canvas = MLCanvas(maxX, y)
         self.canvas.pixels = pixels
         
-        # Create NeoPixel object with appropriate configuration.
-        self.strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
-        # Intialize the library (must be called once before other functions).
-        self.strip.begin()
+        
         
     
     def openWindow(self):
@@ -74,9 +68,12 @@ class Graph:
         im = self.im.rotate(time.time() * 20)
         self.pg.update(im, values);
         
+        self.updateCanvas(im)
+        for renderer in self.renderers:
+            renderer.update(self.canvas)
+        
         # self.updateAnalyzer(values)
         # self.updateFX(values)
-        self.updateLEDs(im)
         # self.updateSimulator(im)
         # self.drawPIL(im)
 
@@ -95,18 +92,19 @@ class Graph:
             
         self.win.flush()
         
-    def updateLEDs(self, im):
+    def updateCanvas(self, im):
         startTime = time.time() * 1000.0
         print "update start"
         for i in range(len(self.canvas.pixels)):
             pixel = self.canvas.pixels[i]
             # print "calculating pixel", pixel.x, pixel.y, i
-            rgb = self.getPixelValue(pixel, im)
-            self.strip.setPixelColor(i, Color(int(rgb[0]), int(rgb[1]), int(rgb[2])))
+            r, g, b = self.getPixelValue(pixel, im)
+            pixel.color = MLColor(r, b, g)
+            # self.strip.setPixelColor(i, Color(int(rgb[0]), int(rgb[1]), int(rgb[2])))
             
         # self.strip.setPixelColor(10, Color(255, 255, 255))
         usedTime = (time.time() * 1000.0) - startTime
-        self.strip.show()
+        # self.strip.show()
         print "update stop, used time=%s" % (usedTime)
         # time.sleep(50 / 1000)
         
