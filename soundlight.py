@@ -17,8 +17,10 @@ import struct
 import sys
 import time
 
+from generator import *
 from graph import Graph
 from ledrenderer import LEDRenderer
+from magiclamp import *
 
 
 MAX = 0
@@ -36,10 +38,51 @@ def list_devices():
             print str(i) + '. ' + dev['name']
         i += 1
 
+def initMLCanvas():
+        numLeds = 240
+        pixelPerRow = 14
+        incY = 1
+        incX = 15
+        pixels = []
+        
+        x = 0
+        y = 0
+        maxX = 0
+        
+        currentRowPixelCount = 0
+        
+        for i in range(numLeds):
+            # todo: modulo
+            if currentRowPixelCount > pixelPerRow:
+                if ((i / pixelPerRow) % 2 == 0):
+                    currentRowPixelCount = 0
+                    x = 0
+                else:
+                    currentRowPixelCount = 1
+                    x = int(incX / 2)
+            
+            pix = MLPixel(x + incX / 2, y + incX / 2, MLColor(0, 0, 0))
+            y = y + incY
+            x = x + incX
+            if maxX < x:
+                maxX = x
+            currentRowPixelCount = currentRowPixelCount + 1
+            
+            pixels.append(pix)
+            
+        canvas = MLCanvas(maxX, y)
+        canvas.pixels = pixels
+        
+        return canvas
+
 def start(): 
+    canvas = initMLCanvas()
+    
     # init Graph
-    ledRenderer = LEDRenderer()
-    graph = Graph([ledRenderer])
+    ledRenderer = LEDRenderer(canvas)
+    analyzerPointGenerator = AnalyzerPointGenerator(canvas, LEVELS)
+    imageBasedGenerator = ImageBasedGenerator(canvas)
+    graph = Graph([ledRenderer], [imageBasedGenerator])
     
     chunk = 2 ** 12  # Change if too fast/slow, never less than 2**11
     scale = 80  # Change if too dim/bright
@@ -71,7 +114,9 @@ def start():
         
         while True:
             try:
+                startTime = time.time() * 1000
                 line = []
+                
                 data = stream.read(chunk)
 
                 # Do FFT
@@ -86,8 +131,12 @@ def start():
                     line.append(level)
             
                 graph.update(line)
+                endTime = time.time() * 1000
+                print "iteration took %s seconds" % (endTime - startTime)
             except IOError:
+                print ":("
                 pass
+            
 
 
     except KeyboardInterrupt:
