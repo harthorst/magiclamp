@@ -23,16 +23,7 @@ class Graph:
     def __init__(self, renderers, generators):
         self.renderers = renderers
         self.generators = generators
-    
-    
-        
-        
-        
-    
-    def openWindow(self):
-        None
-        # self.win = GraphWin('Analyzer', 600, 800)  # give title and dimensions
-        # self.win.autoflush = False
+
 
     def update(self, values):
         # self.pg.update(im, values);
@@ -91,12 +82,5 @@ class Graph:
         circle.draw(self.win)
         self.win.flush()
 
-    def drawPIL(self, im):
-        tkImg = ImageTk.PhotoImage(image=im)
-        self.win.create_image(350, 250, image=tkImg)
-        self.win.flush()
-        
 
-    def closeWindow(self):
-        self.win.close()
 

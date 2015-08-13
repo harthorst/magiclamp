@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageTk, ImageStat
 import numpy
 import time
 
+from graphics import GraphWin
 from magiclamp import *
 
 
@@ -35,13 +36,25 @@ class AnalyzerPointGenerator:
         
         return [x, y]
             
+            
 class ImageBasedGenerator:
-    im = Image.open("bar.jpg")
+    im = None
     # im = Image.new("RGB", (290, 250))
     canvas = None
     
-    def __init__(self, canvas):
+    def drawPIL(self, im):
+        tkImg = ImageTk.PhotoImage(image=im)
+        self.win.create_image(im.size[0] / 2, im.size[1] / 2, image=tkImg)
+        self.win.flush()
+        
+    def __init__(self, canvas, showPreview=False):
         self.canvas = canvas
+        self.showPreview = showPreview
+        self.im = Image.open("bar.png")
+        
+        if (showPreview):
+            self.win = GraphWin('Preview', self.im.size[0], self.im.size[1])  # give title and dimensions
+            self.win.autoflush = False
 
     def update(self, values):
         im = self.im.rotate(time.time() * 20)
@@ -49,17 +62,17 @@ class ImageBasedGenerator:
         
         for i in range(len(self.canvas.pixels)):
             pixel = self.canvas.pixels[i]
-            # print "calculating pixel", pixel.x, pixel.y, i
             r, g, b = self.getPixelValue(pixel, im)
-            pixel.color = MLColor(r, b, g)
-            # self.strip.setPixelColor(i, Color(int(rgb[0]), int(rgb[1]), int(rgb[2])))
+            pixel.color = MLColor(r, g, b)
+            
+        if (self.showPreview):
+            self.drawPIL(im)
             
     def getPixelValue(self, pixel, im):
         pixHalfSize = 10
         
         xOnImg = (pixel.x * im.size[0]) / self.canvas.width
         yOnImg = (pixel.y * im.size[1]) / self.canvas.height
-        # print "xOnImg:", xOnImg, "yOnImg:", yOnImg
         
         region = im.crop([xOnImg - pixHalfSize, yOnImg - pixHalfSize, xOnImg + pixHalfSize, yOnImg + pixHalfSize])
         

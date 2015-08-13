@@ -19,7 +19,10 @@ import time
 
 from generator import *
 from graph import Graph
-from ledrenderer import LEDRenderer
+try:
+    from ledrenderer import LEDRenderer
+except:
+    pass
 from magiclamp import *
 
 
@@ -79,10 +82,16 @@ def start():
     canvas = initMLCanvas()
     
     # init Graph
-    ledRenderer = LEDRenderer(canvas)
+    renderers = []
+    
+    try:
+        renderers.append(LEDRenderer(canvas))
+    except:
+        pass
+        
     analyzerPointGenerator = AnalyzerPointGenerator(canvas, LEVELS)
-    imageBasedGenerator = ImageBasedGenerator(canvas)
-    graph = Graph([ledRenderer], [imageBasedGenerator])
+    imageBasedGenerator = ImageBasedGenerator(canvas, True)
+    graph = Graph(renderers, [imageBasedGenerator])
     
     chunk = 2 ** 12  # Change if too fast/slow, never less than 2**11
     scale = 80  # Change if too dim/bright
@@ -102,8 +111,6 @@ def start():
                     frames_per_buffer=chunk)
     
     print "Starting, use Ctrl+C to stop"
-    
-    graph.openWindow()
     
     try:
         
@@ -147,7 +154,6 @@ def start():
         stream.close()
         p.terminate()
         
-        graph.closeWindow()
 
 def calculate_levels(data, chunk, samplerate):
     # Use FFT to calculate volume for each frequency
