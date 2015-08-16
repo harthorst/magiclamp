@@ -11,11 +11,6 @@ renderers = None
 
 
 class Graph:
-    bars = None
-    
-    # im = Image.open("asterisk-main.jpg")
-    
-    pg = PointGenerator()
     strip = None
     renderers = []
     generators = []
@@ -26,10 +21,6 @@ class Graph:
 
 
     def update(self, values):
-        # self.pg.update(im, values);
-        
-        # self.updateCanvas(im)
-        
         for generator in self.generators:
             generator.update(values)
         

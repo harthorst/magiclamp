@@ -19,6 +19,7 @@ import time
 
 from generator import *
 from graph import Graph
+from lmgraphics.pointgenerator import PointGenerator
 try:
     from ledrenderer import LEDRenderer
 except:
@@ -83,32 +84,24 @@ def start():
     
     # init Graph
     renderers = []
+    generators = []
     
     try:
         renderers.append(LEDRenderer(canvas))
     except:
         pass
+    
+    # set up imageBasedGenerator
+    # generators.append(ImageBasedGenerator(canvas, [PointGenerator()], False))
+    # generators.append(ImageBasedGenerator(canvas, [RotatingGenerator()], False))
+    # generators.append(LavaGenerator(canvas))
+    # generators.append(RainbowGenerator(canvas))
+    generators.append(FloatingPointGenerator(canvas))
         
     analyzerPointGenerator = AnalyzerPointGenerator(canvas, LEVELS)
-    imageBasedGenerator = ImageBasedGenerator(canvas, True)
-    graph = Graph(renderers, [imageBasedGenerator])
+    graph = Graph(renderers, [generators[0]])
     
-    chunk = 2 ** 12  # Change if too fast/slow, never less than 2**11
-    scale = 80  # Change if too dim/bright
-    exponent = 2  # Change if too little/too much difference between loud and quiet sounds
-    samplerate = 48100 
-
-    # CHANGE THIS TO CORRECT INPUT DEVICE
-    # Enable stereo mixing in your sound card
-    # to make you sound output an input
-    # Use list_devices() to list all your input devices
     
-    p = pyaudio.PyAudio()
-    stream = p.open(format=pyaudio.paInt16,
-                    channels=1,
-                    rate=samplerate,
-                    input=True,
-                    frames_per_buffer=chunk)
     
     print "Starting, use Ctrl+C to stop"
     
@@ -118,28 +111,26 @@ def start():
             line = []
             graph.update(line)
             # time.sleep(1)
+            
+        lastTime = time.time()
+        iterations = 0
         
         while True:
             try:
-                startTime = time.time() * 1000
+                graph.generators = [generators[int(time.time() / 15 % (len(generators)))]]
                 line = []
                 
-                data = stream.read(chunk)
-
-                # Do FFT
-                levels = calculate_levels(data, chunk, samplerate)
-
-                # Make it look better and send to serial
-                for level in levels:
-                    level = max(min(level / scale, 1.0), 0.0)
-                    level = level ** exponent 
-                    level = int(level * 255)
-                
-                    line.append(level)
+                # line = getValues()
             
                 graph.update(line)
-                endTime = time.time() * 1000
-                print "iteration took %s seconds" % (endTime - startTime)
+                now = time.time()
+                iterations += 1
+                
+                if (now - lastTime > 1):
+                    print "%s fps" % (iterations)
+                    iterations = 0
+                    lastTime = now
+                    
             except IOError:
                 print ":("
                 pass
@@ -147,13 +138,44 @@ def start():
 
 
     except KeyboardInterrupt:
+        print "interrupt"
         pass
     finally:
         print "\nStopping"
         print sys.exc_info()
         stream.close()
         p.terminate()
+    
+def getValues():
+    samplerate = 48100 
+    line = []
+    chunk = 2 ** 12  # Change if too fast/slow, never less than 2**11
+    
+    p = pyaudio.PyAudio()
+    
+    if (not "stream" in globals()):
+        stream = p.open(format=pyaudio.paInt16,
+                    channels=1,
+                    rate=samplerate,
+                    input=True,
+                    frames_per_buffer=chunk)
         
+    scale = 80  # Change if too dim/bright
+    exponent = 2  # Change if too little/too much difference between loud and quiet sounds
+    data = stream.read(chunk)
+
+    # Do FFT
+    levels = calculate_levels(data, chunk, samplerate)
+
+    # Make it look better and send to serial
+    for level in levels:
+        level = max(min(level / scale, 1.0), 0.0)
+        level = level ** exponent 
+        level = int(level * 255)
+                
+        line.append(level)
+        
+    return line
 
 def calculate_levels(data, chunk, samplerate):
     # Use FFT to calculate volume for each frequency

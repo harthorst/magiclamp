@@ -3,9 +3,6 @@ Created on Jul 26, 2015
 
 @author: tf
 '''
-from Crypto.Util.number import size
-from PIL import ImageColor, ImageDraw
-from PIL.ImageQt import rgb
 import numpy
 from numpy.random.mtrand import randint
 import time
@@ -15,7 +12,7 @@ class Point(object):
     x = 50
     y = 50
     color = None
-    startTime = 0
+    lastUpdate = 0
     endTime = 0
     speed = 50
     size = 8
@@ -26,7 +23,7 @@ class Point(object):
     def __init__(self, x=50, y=50, ttl=10):
         self.x = x
         self.y = y
-        self.startTime = time.time() * 1000
+        self.lastUpdate = time.time() * 1000
         self.endTime = time.time() * 1000 + (ttl * 1000)
         self.color = (randint(255), randint(255), randint(255))
         
@@ -38,7 +35,7 @@ class Point(object):
         if self.isAlive() == False:
             return
         
-        distance = (self.speed * (time.time() * 1000 - self.startTime)) / 1000
+        distance = (self.speed * (time.time() * 1000 - self.lastUpdate)) / 1000
         
         # print "dist", distance, "1", numpy.sin(self.direction), "2", numpy.cos(self.direction)
         
@@ -82,7 +79,7 @@ class PointGenerator(object):
         
     def update(self, im, values):
         index = 9
-        if values[index] > 50:
+        if values[index] > 60:
             self.points.append(Point(randint(im.size[0]), 0, 10))
             
             
@@ -92,3 +89,4 @@ class PointGenerator(object):
             else:
                 point.draw(values, im)
         
+        return im
