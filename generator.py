@@ -129,10 +129,11 @@ class LavaGenerator:
             # if ((i + time.time() * 10) % 14.5 == 0):
             #    pixel.color.r = 255
             # else:
-            t = time.time() / 10
+            t = time.time() * 1
             pixel.color.r = 0
             pixel.color.g = 0
-            pixel.color.b = (numpy.sin((i + t) % 14.5) * numpy.sin((i + t) / 14.5) * 128) + 128
+            # * numpy.sin((i + t)) / 14.5
+            pixel.color.b = (1 + numpy.sin((i + t) % 14.5) * numpy.sin((i / 14.5 + t))) * 128
           
 class RainbowGenerator:
     canvas = None
@@ -176,10 +177,8 @@ class ZoomingGenerator:
     def update(self, im, values):
         t = time.time()
         (sizeX, sizeY) = im.size
-        print sizeX
         x = int(sizeX * self.min + (1 + numpy.sin(float(t * self.speed))) * (sizeX / 2) * (self.max - self.min))
         y = int(sizeY * self.min + (1 + numpy.sin(float(t * self.speed))) * (sizeY / 2) * (self.max - self.min))
-        print x, sizeX
         im = im.resize((x, y))
         
         borderX = (im.size[0] - sizeX) / 2
