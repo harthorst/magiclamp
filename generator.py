@@ -58,7 +58,7 @@ class FloatingPointGenerator:
         t = time.time()
         if (len(self.points) < self.maxPoints):
             point = Point(randint(0, self.pixelPerRow), 0)
-            point.speed = randint(500, 5000)
+            point.speed = randint(1000, 5000)
             point.color = [random(), random(), random()]
             point.lastUpdate = t
             self.points.append([point])
@@ -158,8 +158,33 @@ class RainbowGenerator:
             # print i, pixel.color.b
            
 class RotatingGenerator:
+    def __init__(self, speed):
+        self.speed = speed
+    
     def update(self, im, values):
-        im = im.rotate(time.time() * 20)
+        im = im.rotate(time.time() * self.speed)
+        
+        return im
+    
+class ZoomingGenerator:
+    
+    def __init__(self, speed, min, max):
+        self.speed = speed
+        self.min = min
+        self.max = max
+    
+    def update(self, im, values):
+        t = time.time()
+        (sizeX, sizeY) = im.size
+        print sizeX
+        x = int(sizeX * self.min + (1 + numpy.sin(float(t * self.speed))) * (sizeX / 2) * (self.max - self.min))
+        y = int(sizeY * self.min + (1 + numpy.sin(float(t * self.speed))) * (sizeY / 2) * (self.max - self.min))
+        print x, sizeX
+        im = im.resize((x, y))
+        
+        borderX = (im.size[0] - sizeX) / 2
+        borderY = (im.size[1] - sizeY) / 2
+        im = im.crop([borderX, borderY, im.size[0] - borderX , im.size[1] - borderY])
         
         return im
             
@@ -173,11 +198,11 @@ class ImageBasedGenerator:
         self.win.create_image(im.size[0] / 2, im.size[1] / 2, image=tkImg)
         self.win.flush()
         
-    def __init__(self, canvas, generators, showPreview=False):
+    def __init__(self, imagePath, canvas, generators, showPreview=False):
         self.canvas = canvas
         self.showPreview = showPreview
         self.generators = generators
-        self.im = Image.open("bar.png")
+        self.im = Image.open(imagePath)
         # self.im = Image.new("RGB", (290, 250))
         
         if (showPreview):

@@ -93,10 +93,10 @@ def start():
     
     # set up imageBasedGenerator
     # generators.append(ImageBasedGenerator(canvas, [PointGenerator()], False))
-    # generators.append(ImageBasedGenerator(canvas, [RotatingGenerator()], False))
+    generators.append(ImageBasedGenerator("bar.png", canvas, [RotatingGenerator(20), ZoomingGenerator(0.2, 1, 1.5)], False))
     # generators.append(LavaGenerator(canvas))
-    # generators.append(RainbowGenerator(canvas))
-    generators.append(FloatingPointGenerator(canvas))
+   # generators.append(RainbowGenerator(canvas))
+    # generators.append(FloatingPointGenerator(canvas))
         
     analyzerPointGenerator = AnalyzerPointGenerator(canvas, LEVELS)
     graph = Graph(renderers, [generators[0]])
