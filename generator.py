@@ -49,46 +49,54 @@ class FloatingPointGenerator:
     points = []
     maxPoints = 6
     pixelPerRow = 14
-    tailElementSpeedFactor = 4
+    tailElementSpeedFactor = 8
     
     def __init__(self, canvas):
         self.canvas = canvas
         
     def update(self, values):
+        t = time.time()
         if (len(self.points) < self.maxPoints):
             point = Point(randint(0, self.pixelPerRow), 0)
             point.speed = randint(500, 5000)
             point.color = [random(), random(), random()]
-            self.points.append(point)
-            
-        t = time.time()
-        for point in self.points:
-            
-            point.brightness = numpy.minimum(255, point.brightness + (t - point.lastUpdate) * point.speed)
             point.lastUpdate = t
+            self.points.append([point])
             
-            if (point.brightness >= 255):
-                tailPoint = Point(point.pos, point.brightness)
-                tailPoint.lastUpdate = t
-                tailPoint.color = point.color
-                tailPoint.speed = point.speed / self.tailElementSpeedFactor
-                point.pos = point.pos + self.pixelPerRow + randint(0, 1)
-                point.brightness = 0
-                point.tailPoints.append(tailPoint)
+        for pointArr in self.points:
+            for point in pointArr:
+                
+                if (point.speed > 0):
+                    point.brightness = numpy.minimum(255, point.brightness + (t - point.lastUpdate) * point.speed)
+                else:
+                    point.brightness = numpy.maximum(0, point.brightness + (t - point.lastUpdate) * point.speed)
+                
+                point.lastUpdate = t
+            
+                if (pointArr.index(point) == 0 and point.brightness >= 255):
+                    tailPoint = Point(point.pos, point.brightness)
+                    tailPoint.lastUpdate = t
+                    tailPoint.color = point.color
+                    tailPoint.speed = -1 * point.speed / self.tailElementSpeedFactor
+                    point.pos = point.pos + self.pixelPerRow + randint(0, 1)
+                    point.brightness = 0
+                    pointArr.append(tailPoint)
+                    
                 if (point.pos >= 240):
-                    self.points.remove(point)
-                    break
+                    pointArr.remove(point)
+                    continue
             
+                # set black points before removal
+                self.setPoint(point)
                 
-            self.setPoint(point)
-            
-            for tailPoint in point.tailPoints:
-                tailPoint.brightness = numpy.maximum(0, tailPoint.brightness - (t - tailPoint.lastUpdate) * tailPoint.speed)
-                tailPoint.lastUpdate = t
-                self.setPoint(tailPoint)
+                # remove black tail points
+                if (point.speed < 0 and point.brightness == 0):
+                    pointArr.remove(point)
+                    
+                # remove empty points
+                if (len(pointArr) == 0):
+                    self.points.remove(pointArr)
                 
-                if (tailPoint.brightness <= 0):
-                    point.tailPoints.remove(tailPoint)
     
     def setPoint(self, point):
         c = self.canvas.pixels[point.pos].color
@@ -96,11 +104,12 @@ class FloatingPointGenerator:
         c.g = point.color[1] * point.brightness
         c.b = point.color[2] * point.brightness
         
+        # map(self.setPoint, point.tailPoints)
+        
 class Point:
     brightness = 255
     pos = -1
     speed = 1000
-    tailPoints = []
     lastUpdate = -1
     color = [0, 0, 0]
     
