@@ -12,9 +12,10 @@ try:
 except:
     pass
 
+class Generator:
+    config = {}
 
-
-class AnalyzerPointGenerator:
+class AnalyzerPointGenerator(Generator):
     
     canvas = None
     
@@ -44,7 +45,7 @@ class AnalyzerPointGenerator:
         
         return [x, y]
             
-class FloatingPointGenerator:
+class FloatingPointGenerator(Generator):
     canvas = None
     points = []
     maxPoints = 6
@@ -118,10 +119,11 @@ class Point:
         self.brightness = brightness
     
         
-class LavaGenerator:
+class LavaGenerator(Generator):
     canvas = None
-    def __init__(self, canvas):
+    def __init__(self, canvas, config):
         self.canvas = canvas
+        self.config = config
         
     def update(self, values):
         for i in range(len(self.canvas.pixels)):
@@ -130,12 +132,13 @@ class LavaGenerator:
             #    pixel.color.r = 255
             # else:
             t = time.time() * 1
-            pixel.color.r = 0
-            pixel.color.g = 0
+            val = (1 + numpy.sin((i + t) % 14.5) * numpy.sin((i / 14.5 + t)))
+            pixel.color.r = val * self.config['color']['r'] / 2
+            pixel.color.g = val * self.config['color']['g'] / 2
             # * numpy.sin((i + t)) / 14.5
-            pixel.color.b = (1 + numpy.sin((i + t) % 14.5) * numpy.sin((i / 14.5 + t))) * 128
+            pixel.color.b = val * self.config['color']['b'] / 2
           
-class RainbowGenerator:
+class RainbowGenerator(Generator):
     canvas = None
     def __init__(self, canvas):
         self.canvas = canvas
@@ -158,7 +161,7 @@ class RainbowGenerator:
                 pixel.color.b = 0
             # print i, pixel.color.b
            
-class RotatingGenerator:
+class RotatingGenerator(Generator):
     def __init__(self, speed):
         self.speed = speed
     
@@ -167,7 +170,7 @@ class RotatingGenerator:
         
         return im
     
-class ZoomingGenerator:
+class ZoomingGenerator(Generator):
     
     def __init__(self, speed, min, max):
         self.speed = speed
@@ -187,7 +190,7 @@ class ZoomingGenerator:
         
         return im
             
-class ImageBasedGenerator:
+class ImageBasedGenerator(Generator):
     im = None
     canvas = None
     generators = []

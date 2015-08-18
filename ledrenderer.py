@@ -22,3 +22,6 @@ class LEDRenderer:
             self.strip.setPixelColor(i, Color(int(color.r), int(color.g), int(color.b)))
             
         self.strip.show()
+
+    def setBrightness(self, brightness):
+        self.strip.setBrightness(int(brightness))

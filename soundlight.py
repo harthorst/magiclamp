@@ -9,27 +9,88 @@ http://macdevcenter.com/pub/a/python/2001/01/31/numerically.html?page=2
 '''
 
 import audioop
+from flask import Flask, jsonify
+from flask import request
 import math
 import numpy  # from http://numpy.scipy.org/
 import pyaudio  # from http://people.csail.mit.edu/hubert/pyaudio/
 import serial  # from http://pyserial.sourceforge.net/
 import struct
 import sys
+from thread import start_new_thread
 import time
 
 from generator import *
 from graph import Graph
 from lmgraphics.pointgenerator import PointGenerator
+from magiclamp import *
+
+
 try:
     from ledrenderer import LEDRenderer
 except:
     pass
-from magiclamp import *
 
+app = Flask(__name__)
 
 MAX = 0
 LEVELS = 20
 graph = None
+
+
+@app.route('/config')
+def getConfig():
+    return jsonify({'generatorIndex' : config['generatorIndex'],
+                    'brightness' : config['brightness']})
+
+@app.route('/config', methods=['PUT'])
+def setConfig():
+    if not request.json:
+        return "no request", 400
+    
+    brightness = request.json['brightness']
+    config['brightness'] = brightness
+    
+    updateConfig();
+        
+    return jsonify(request.json)
+
+@app.route('/generatorConfig/<int:generatorId>')
+def getGeneratorConfig(generatorId=None):
+    return jsonify(config['generators'][generatorId].config)
+
+@app.route('/generatorConfig/<int:generatorId>', methods=['PUT'])
+def setGeneratorConfig(generatorId=None):
+    if not request.json:
+        return "no request", 400
+    
+    config['generators'][generatorId].config = request.json
+    
+    return jsonify(config['generators'][generatorId].config)
+    
+
+@app.route('/next')
+def nextGenerator():
+    
+    generators = config.get('generators')
+    generatorIndex = config.get('generatorIndex')
+    if (generatorIndex == len(generators) - 1):
+        generatorIndex = 0
+    else:
+        generatorIndex = generatorIndex + 1
+        
+    print "setting generatorIndex to %s" % (generatorIndex)
+
+    config['generatorIndex'] = generatorIndex
+    
+    return "true"
+
+def updateConfig():
+    brightness = config['brightness']
+    print "setting brightness to %s" % (brightness)
+    
+    for renderer in config['renderers']:
+        renderer.setBrightness(brightness)
 
 def list_devices():
     # List all audio input devices
@@ -81,27 +142,31 @@ def initMLCanvas():
 
 def start(): 
     canvas = initMLCanvas()
+    config['canvas'] = canvas
     
     # init Graph
-    renderers = []
-    generators = []
+    renderers = config['renderers']
     
     try:
         renderers.append(LEDRenderer(canvas))
     except:
         pass
     
+    generators = []
+    
     # set up imageBasedGenerator
     # generators.append(ImageBasedGenerator(canvas, [PointGenerator()], False))
-    # generators.append(ImageBasedGenerator("bar.png", canvas, [RotatingGenerator(20), ZoomingGenerator(0.2, 1, 1.5)], False))
-    generators.append(LavaGenerator(canvas))
-   # generators.append(RainbowGenerator(canvas))
-    # generators.append(FloatingPointGenerator(canvas))
+    generators.append(ImageBasedGenerator("bar.png", canvas, [RotatingGenerator(20), ZoomingGenerator(0.2, 1, 1.5)], False))
+    generators.append(LavaGenerator(canvas, {'color' : {'r' : 0, 'g' : 0, 'b' : 255}}))
+    generators.append(RainbowGenerator(canvas))
+    generators.append(FloatingPointGenerator(canvas))
+    
+    config['generators'] = generators
         
     analyzerPointGenerator = AnalyzerPointGenerator(canvas, LEVELS)
     graph = Graph(renderers, [generators[0]])
     
-    
+    updateConfig()
     
     print "Starting, use Ctrl+C to stop"
     
@@ -114,10 +179,22 @@ def start():
             
         lastTime = time.time()
         iterations = 0
+        lastIndex = -1
         
         while True:
             try:
-                graph.generators = [generators[int(time.time() / 15 % (len(generators)))]]
+                
+                # clear canvas if generator changes
+                if (lastIndex != config['generatorIndex']):
+                    for pixel in config['canvas'].pixels:
+                        color = pixel.color
+                        color.r = 0
+                        color.g = 0
+                        color.b = 0
+                        
+                    lastIndex = config['generatorIndex']
+    
+                graph.generators = [generators[config['generatorIndex']]]
                 line = []
                 
                 # line = getValues()
@@ -200,11 +277,16 @@ def calculate_levels(data, chunk, samplerate):
     
     size = len(fourier)
 
-    # Add up for 6 lights
+    # Add some lights
     levels = [sum(fourier[i:(i + size / LEVELS)]) for i in xrange(0, size, size / LEVELS)][:LEVELS]
     
     return levels
 
 if __name__ == '__main__':
+    config = {'generatorIndex' : 0, 'generators' : [],
+              'renderers' : [],
+              'brightness' : 50}
     # list_devices()
-    start()
+    start_new_thread(start, ())
+    
+    app.run(host='0.0.0.0', debug=False)
