@@ -5,10 +5,16 @@ from random import randint, random
 import time, colorsys
 
 from magiclamp import *
+import multiprocessing as mp
 
 
 try:
     from graphics import GraphWin
+except:
+    pass
+
+try:
+    from numba import jit
 except:
     pass
 
@@ -22,6 +28,7 @@ class AnalyzerPointGenerator(Generator):
     def __init__(self, canvas, channels):
         self.canvas = canvas
             
+    # @jit
     def update(self, values):
         for pixel in self.canvas.pixels:
             pixel.color.r = 0
@@ -38,7 +45,8 @@ class AnalyzerPointGenerator(Generator):
                                  self.getCoords(180 + rotatDeg, 50),
                                  self.getCoords(270 + rotatDeg, 50)],
                                 MLColor(255, 255, 255))
-        
+    
+    # @jit
     def getCoords(self, degree, distance):
         x = 100 + int(numpy.sin(numpy.deg2rad(degree)) * distance)
         y = 100 + int(numpy.cos(numpy.deg2rad(degree)) * distance)
@@ -49,17 +57,18 @@ class FloatingPointGenerator(Generator):
     canvas = None
     points = []
     maxPoints = 6
-    pixelPerRow = 14
+    pixelPerRow = 15
     tailElementSpeedFactor = 8
     
     def __init__(self, canvas):
         self.canvas = canvas
         
+    # @jit
     def update(self, values):
-        t = time.time()
+        t = time.time() * 1000
         if (len(self.points) < self.maxPoints):
             point = Point(randint(0, self.pixelPerRow), 0)
-            point.speed = randint(1000, 5000)
+            point.speed = randint(1, 10)
             point.color = [random(), random(), random()]
             point.lastUpdate = t
             self.points.append([point])
@@ -79,7 +88,7 @@ class FloatingPointGenerator(Generator):
                     tailPoint.lastUpdate = t
                     tailPoint.color = point.color
                     tailPoint.speed = -1 * point.speed / self.tailElementSpeedFactor
-                    point.pos = point.pos + self.pixelPerRow + randint(0, 1)
+                    point.pos = point.pos + self.pixelPerRow + randint(-1, 1)
                     point.brightness = 0
                     pointArr.append(tailPoint)
                     
@@ -98,7 +107,7 @@ class FloatingPointGenerator(Generator):
                 if (len(pointArr) == 0):
                     self.points.remove(pointArr)
                 
-    
+    # @jit
     def setPoint(self, point):
         c = self.canvas.pixels[point.pos].color
         c.r = point.color[0] * point.brightness
@@ -110,7 +119,6 @@ class FloatingPointGenerator(Generator):
 class Point:
     brightness = 255
     pos = -1
-    speed = 1000
     lastUpdate = -1
     color = [0, 0, 0]
     
@@ -124,14 +132,15 @@ class LavaGenerator(Generator):
     def __init__(self, canvas, config):
         self.canvas = canvas
         self.config = config
-        
+       
+    # @jit 
     def update(self, values):
         for i in range(len(self.canvas.pixels)):
             pixel = self.canvas.pixels[i]
             # if ((i + time.time() * 10) % 14.5 == 0):
             #    pixel.color.r = 255
             # else:
-            t = time.time() * 1
+            t = time.time()
             val = (1 + numpy.sin((i + t) % 14.5) * numpy.sin((i / 14.5 + t)))
             pixel.color.r = val * self.config['color']['r'] / 2
             pixel.color.g = val * self.config['color']['g'] / 2
@@ -143,6 +152,7 @@ class RainbowGenerator(Generator):
     def __init__(self, canvas):
         self.canvas = canvas
         
+    # @jit
     def update(self, values):
         for i in range(len(self.canvas.pixels)):
             pixel = self.canvas.pixels[i]
@@ -173,12 +183,12 @@ class RotatingGenerator(Generator):
 class ZoomingGenerator(Generator):
     
     def __init__(self, speed, min, max):
-        self.speed = speed
+        self.speed = speed / 1000
         self.min = min
         self.max = max
     
     def update(self, im, values):
-        t = time.time()
+        t = time.time() * 1000
         (sizeX, sizeY) = im.size
         x = int(sizeX * self.min + (1 + numpy.sin(float(t * self.speed))) * (sizeX / 2) * (self.max - self.min))
         y = int(sizeY * self.min + (1 + numpy.sin(float(t * self.speed))) * (sizeY / 2) * (self.max - self.min))
@@ -211,6 +221,7 @@ class ImageBasedGenerator(Generator):
             self.win = GraphWin('Preview', self.im.size[0], self.im.size[1])  # give title and dimensions
             self.win.autoflush = False
 
+    # @jit
     def update(self, values):
         # im = Image.new("RGB", (290, 250))
         im = self.im
@@ -218,36 +229,38 @@ class ImageBasedGenerator(Generator):
         for generator in self.generators:
             im = generator.update(im, values)
         
-        for i in range(len(self.canvas.pixels)):
-            pixel = self.canvas.pixels[i]
-            r, g, b = self.getPixelValue(pixel, im)
-            pixel.color = MLColor(r, g, b)
-            
+        self.getPixelValue(self.canvas.pixels, im)
+
+            # self.getPixelValue(pixel, im)
+                        
         if (self.showPreview):
             self.drawPIL(im)
             
-    def getPixelValue(self, pixel, im):
+    # @jit
+    def getPixelValue(self, pixels, im):
         pixHalfSize = 10
         
-        xOnImg = (pixel.x * im.size[0]) / self.canvas.width
-        yOnImg = (pixel.y * im.size[1]) / self.canvas.height
+        for pixel in pixels:
+            xOnImg = (pixel.x * im.size[0]) / self.canvas.width
+            yOnImg = (pixel.y * im.size[1]) / self.canvas.height
         
-        region = im.crop([xOnImg - pixHalfSize, yOnImg - pixHalfSize, xOnImg + pixHalfSize, yOnImg + pixHalfSize])
+            region = im.crop([xOnImg - pixHalfSize, yOnImg - pixHalfSize, xOnImg + pixHalfSize, yOnImg + pixHalfSize])
         
-        colors = region.getcolors()
-        r = 0
-        g = 0
-        b = 0
-        count = 0
-        for i in range(len(colors)):
-            c, rgb = colors[i]
-            r += c * rgb[0]
-            g += c * rgb[1]
-            b += c * rgb[2]
-            count += c
+            colors = region.getcolors()
+            r = 0
+            g = 0
+            b = 0
+            count = 0
+            for i in range(len(colors)):
+                c, rgb = colors[i]
+                r += c * rgb[0]
+                g += c * rgb[1]
+                b += c * rgb[2]
+                count += c
             
+            pixel.color = MLColor(int(r / count), int(g / count), int(b / count))
         
-        return [int(r / count), int(g / count), int(b / count)]
+        # return [int(r / count), int(g / count), int(b / count)]
         
-        imStat = ImageStat.Stat(region)
-        return imStat.mean
+        # imStat = ImageStat.Stat(region)
+        # return imStat.mean

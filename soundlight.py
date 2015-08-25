@@ -119,13 +119,9 @@ def initMLCanvas():
         for i in range(numLeds):
             # todo: modulo
             if currentRowPixelCount > pixelPerRow:
-                if ((i / pixelPerRow) % 2 == 0):
-                    currentRowPixelCount = 0
-                    x = 0
-                else:
-                    currentRowPixelCount = 1
-                    x = int(incX / 2)
-            
+                currentRowPixelCount = 0
+                x = 0
+                
             pix = MLPixel(x + incX / 2, y + incX / 2, MLColor(0, 0, 0))
             y = y + incY
             x = x + incX

@@ -1,4 +1,10 @@
 from neopixel import *
+try:
+    from numba import jit
+except:
+    pass
+
+
 
 class LEDRenderer:
     strip = None
@@ -13,9 +19,11 @@ class LEDRenderer:
         
         self.canvas = canvas
         
+    # @jit
     def update(self):
         self.updateLEDs()
         
+    # @jit
     def updateLEDs(self):
         for i in range(len(self.canvas.pixels)):
             color = self.canvas.pixels[i].color
