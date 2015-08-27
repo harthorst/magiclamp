@@ -229,9 +229,10 @@ class ImageBasedGenerator(Generator):
         for generator in self.generators:
             im = generator.update(im, values)
         
+        # p1 = mp.Process(target=self.getPixelValue, args=(self.canvas.pixels, im))
+        # p1.start()
+        # p1.join()
         self.getPixelValue(self.canvas.pixels, im)
-
-            # self.getPixelValue(pixel, im)
                         
         if (self.showPreview):
             self.drawPIL(im)
