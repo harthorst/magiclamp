@@ -66,7 +66,7 @@ class FloatingPointGenerator(Generator):
     # @jit
     def update(self, values):
         t = time.time() * 1000
-        if (len(self.points) < self.maxPoints):
+        while (len(self.points) < self.maxPoints):
             point = Point(randint(0, self.pixelPerRow), 0)
             point.speed = randint(1, 10)
             point.color = [random(), random(), random()]

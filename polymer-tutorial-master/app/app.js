@@ -6,7 +6,7 @@ var DEFAULT_ROUTE = 'one';
 var template = document.querySelector('#t');
 
 template.pages = [
-  {name: 'power', hash: 'one', icon: 'settings-power'},
+  {name: 'config', hash: 'config', icon: 'menu'},
   {name: 'effects', hash: 'effects', icon: 'apps'}
 ];
 

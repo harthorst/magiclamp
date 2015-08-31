@@ -41,15 +41,16 @@ graph = None
 @app.route('/config')
 def getConfig():
     return jsonify({'generatorIndex' : config['generatorIndex'],
-                    'brightness' : config['brightness']})
+                    'brightness' : config['brightness'],
+                    'active' : config['active']})
 
 @app.route('/config', methods=['PUT'])
 def setConfig():
     if not request.json:
         return "no request", 400
     
-    brightness = request.json['brightness']
-    config['brightness'] = brightness
+    config['brightness'] = request.json['brightness']
+    config['active'] = request.json['active']
     
     updateConfig();
         
@@ -91,6 +92,15 @@ def updateConfig():
     
     for renderer in config['renderers']:
         renderer.setBrightness(brightness)
+        
+    if (config['active'] == False):
+        for pixel in config['canvas'].pixels:
+            pixel.color.r = 0
+            pixel.color.g = 0
+            pixel.color.b = 0
+        
+        for renderer in config['renderers']:
+            renderer.update()
 
 def list_devices():
     # List all audio input devices
@@ -179,6 +189,9 @@ def start():
         
         while True:
             try:
+                if (config['active'] == False):
+                    time.sleep(1)
+                    continue
                 
                 # clear canvas if generator changes
                 if (lastIndex != config['generatorIndex']):
@@ -198,6 +211,9 @@ def start():
                 graph.update(line)
                 now = time.time()
                 iterations += 1
+                
+                # TODO: different process
+                time.sleep(0.01)
                 
                 if (now - lastTime > 1):
                     print "%s fps" % (iterations)
@@ -281,7 +297,8 @@ def calculate_levels(data, chunk, samplerate):
 if __name__ == '__main__':
     config = {'generatorIndex' : 0, 'generators' : [],
               'renderers' : [],
-              'brightness' : 50}
+              'brightness' : 50,
+              'active' : True}
     # list_devices()
     start_new_thread(start, ())
     
