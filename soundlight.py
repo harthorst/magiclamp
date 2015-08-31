@@ -12,18 +12,18 @@ import audioop
 from flask import Flask, jsonify
 from flask import request
 import math
-import numpy  # from http://numpy.scipy.org/
-import pyaudio  # from http://people.csail.mit.edu/hubert/pyaudio/
+from multiprocessing import process
 import serial  # from http://pyserial.sourceforge.net/
-import struct
 import sys
 from thread import start_new_thread
 import time
 
+import analyzer
 from generator import *
 from graph import Graph
 from lmgraphics.pointgenerator import PointGenerator
 from magiclamp import *
+import multiprocessing as mp
 
 
 try:
@@ -33,8 +33,6 @@ except:
 
 app = Flask(__name__)
 
-MAX = 0
-LEVELS = 20
 graph = None
 
 
@@ -102,16 +100,7 @@ def updateConfig():
         for renderer in config['renderers']:
             renderer.update()
 
-def list_devices():
-    # List all audio input devices
-    p = pyaudio.PyAudio()
-    i = 0
-    n = p.get_device_count()
-    while i < n:
-        dev = p.get_device_info_by_index(i)
-        if dev['maxInputChannels'] > 0:
-            print str(i) + '. ' + dev['name']
-        i += 1
+
 
 def initMLCanvas():
         numLeds = 240
@@ -145,6 +134,13 @@ def initMLCanvas():
         canvas.pixels = pixels
         
         return canvas
+    
+def startAnalyzer():
+    global analyzerStat
+    analyzerStat = mp.Array('i', [0] * analyzer.LEVELS)
+    
+    p = mp.Process(target=analyzer.start, args=([analyzerStat]))
+    p.start()
 
 def start(): 
     canvas = initMLCanvas()
@@ -165,14 +161,16 @@ def start():
     generators.append(FloatingPointGenerator(canvas))
     generators.append(ImageBasedGenerator("bar.png", canvas, [RotatingGenerator(20), ZoomingGenerator(0.2, 1, 1.5)], False))
     generators.append(LavaGenerator(canvas, {'color' : {'r' : 0, 'g' : 0, 'b' : 255}}))
+    generators.append(AnalyzerGenerator(canvas, {'color' : {'r' : 0, 'g' : 0, 'b' : 255}}))
     generators.append(RainbowGenerator(canvas))
     
     config['generators'] = generators
         
-    analyzerPointGenerator = AnalyzerPointGenerator(canvas, LEVELS)
-    graph = Graph(renderers, [generators[0]])
+    graph = Graph(renderers, [generators[2], generators[0]])
     
     updateConfig()
+    
+    startAnalyzer()
     
     print "Starting, use Ctrl+C to stop"
     
@@ -203,20 +201,18 @@ def start():
                         
                     lastIndex = config['generatorIndex']
     
-                graph.generators = [generators[config['generatorIndex']]]
-                line = []
+                    graph.generators = [generators[config['generatorIndex']]]
                 
-                # line = getValues()
-            
-                graph.update(line)
+                graph.update(analyzerStat)
                 now = time.time()
                 iterations += 1
                 
                 # TODO: different process
-                time.sleep(0.01)
+                time.sleep(0.003)
                 
                 if (now - lastTime > 1):
                     print "%s fps" % (iterations)
+                    # print ' '.join(map(str, analyzerStat))
                     iterations = 0
                     lastTime = now
                     
@@ -235,67 +231,10 @@ def start():
         stream.close()
         p.terminate()
     
-def getValues():
-    samplerate = 48100 
-    line = []
-    chunk = 2 ** 12  # Change if too fast/slow, never less than 2**11
-    
-    p = pyaudio.PyAudio()
-    
-    if (not "stream" in globals()):
-        stream = p.open(format=pyaudio.paInt16,
-                    channels=1,
-                    rate=samplerate,
-                    input=True,
-                    frames_per_buffer=chunk)
-        
-    scale = 80  # Change if too dim/bright
-    exponent = 2  # Change if too little/too much difference between loud and quiet sounds
-    data = stream.read(chunk)
 
-    # Do FFT
-    levels = calculate_levels(data, chunk, samplerate)
-
-    # Make it look better and send to serial
-    for level in levels:
-        level = max(min(level / scale, 1.0), 0.0)
-        level = level ** exponent 
-        level = int(level * 255)
-                
-        line.append(level)
-        
-    return line
-
-def calculate_levels(data, chunk, samplerate):
-    # Use FFT to calculate volume for each frequency
-    global MAX
-
-    # Convert raw sound data to Numpy array
-    fmt = "%dH" % (len(data) / 2)
-    data2 = struct.unpack(fmt, data)
-    data2 = numpy.array(data2, dtype='h')
-
-    # Apply FFT
-    fourier = numpy.fft.fft(data2)
-    ffty = numpy.abs(fourier[0:len(fourier) / 2]) / 1000
-    ffty1 = ffty[:len(ffty) / 2]
-    ffty2 = ffty[len(ffty) / 2::] + 2
-    ffty2 = ffty2[::-1]
-    ffty = ffty1 + ffty2
-    ffty = numpy.log(ffty) - 2
-    
-    fourier = list(ffty)[4:-4]
-    fourier = fourier[:len(fourier) / 2]
-    
-    size = len(fourier)
-
-    # Add some lights
-    levels = [sum(fourier[i:(i + size / LEVELS)]) for i in xrange(0, size, size / LEVELS)][:LEVELS]
-    
-    return levels
 
 if __name__ == '__main__':
-    config = {'generatorIndex' : 0, 'generators' : [],
+    config = {'generatorIndex' : 3, 'generators' : [],
               'renderers' : [],
               'brightness' : 50,
               'active' : True}

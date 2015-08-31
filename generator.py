@@ -13,45 +13,39 @@ try:
 except:
     pass
 
-try:
-    from numba import jit
-except:
-    pass
 
 class Generator:
     config = {}
 
-class AnalyzerPointGenerator(Generator):
-    
+class AnalyzerGenerator(Generator):
     canvas = None
+    pixelPerRow = 15
     
-    def __init__(self, canvas, channels):
+    def __init__(self, canvas, config):
         self.canvas = canvas
-            
-    # @jit
+        self.config = config
+        
     def update(self, values):
-        for pixel in self.canvas.pixels:
-            pixel.color.r = 0
-            pixel.color.g = 0
-            pixel.color.b = 0
-        
-        self.canvas.pixels[22].color.r = 255
-        
-        rotatDeg = time.time() * 10
-        
-        self.canvas.drawPolygon([
-                                 self.getCoords(0 + rotatDeg, 50),
-                                 self.getCoords(90 + rotatDeg, 50),
-                                 self.getCoords(180 + rotatDeg, 50),
-                                 self.getCoords(270 + rotatDeg, 50)],
-                                MLColor(255, 255, 255))
-    
-    # @jit
-    def getCoords(self, degree, distance):
-        x = 100 + int(numpy.sin(numpy.deg2rad(degree)) * distance)
-        y = 100 + int(numpy.cos(numpy.deg2rad(degree)) * distance)
-        
-        return [x, y]
+        for i in range(len(self.canvas.pixels)):
+            pixel = self.canvas.pixels[i]
+            axisLine = int(i / self.pixelPerRow)
+            distance = i % self.pixelPerRow
+            value = values[axisLine]
+            
+            # print value
+            
+            # print (value * self.pixelPerRow) / 56, distance
+            if ((value * self.pixelPerRow) / 26 > distance):
+                val = 1
+            else:
+                val = 0
+
+            # pixel.color.r = val * self.config['color']['r'] / 2
+            # pixel.color.g = val * self.config['color']['g'] / 2
+            # pixel.color.b = val * self.config['color']['b'] / 2
+            pixel.color.r = val * 254
+            pixel.color.g = val * 0
+            pixel.color.b = val * 0
             
 class FloatingPointGenerator(Generator):
     canvas = None
@@ -67,6 +61,9 @@ class FloatingPointGenerator(Generator):
     def update(self, values):
         t = time.time() * 1000
         while (len(self.points) < self.maxPoints):
+            # if (values[9] < 30):
+            #    break
+            
             point = Point(randint(0, self.pixelPerRow), 0)
             point.speed = randint(1, 10)
             point.color = [random(), random(), random()]
@@ -132,19 +129,15 @@ class LavaGenerator(Generator):
     def __init__(self, canvas, config):
         self.canvas = canvas
         self.config = config
-       
-    # @jit 
+        
     def update(self, values):
+        t = time.time()
         for i in range(len(self.canvas.pixels)):
             pixel = self.canvas.pixels[i]
-            # if ((i + time.time() * 10) % 14.5 == 0):
-            #    pixel.color.r = 255
-            # else:
-            t = time.time()
-            val = (1 + numpy.sin((i + t) % 14.5) * numpy.sin((i / 14.5 + t)))
+            val = (1 + math.sin((i + t) % 14.5) * math.sin((i / 14.5 + t)))
+            # val = 10
             pixel.color.r = val * self.config['color']['r'] / 2
             pixel.color.g = val * self.config['color']['g'] / 2
-            # * numpy.sin((i + t)) / 14.5
             pixel.color.b = val * self.config['color']['b'] / 2
           
 class RainbowGenerator(Generator):
