@@ -6,7 +6,7 @@ import struct
 MAX = 0
 LEVELS = 20
 samplerate = 48100 
-chunk = 2 ** 11  # Change if too fast/slow, never less than 2**11
+chunk = 2 ** 12  # Change if too fast/slow, never less than 2**11
 scale = 80  # Change if too dim/bright
 exponent = 2  # Change if too little/too much difference between loud and quiet sounds
 

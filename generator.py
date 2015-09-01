@@ -35,7 +35,7 @@ class AnalyzerGenerator(Generator):
             # print value
             
             # print (value * self.pixelPerRow) / 56, distance
-            if ((value * self.pixelPerRow) / 26 > distance):
+            if ((value * self.pixelPerRow) / 226 > distance):
                 val = 1
             else:
                 val = 0
@@ -50,22 +50,20 @@ class AnalyzerGenerator(Generator):
 class FloatingPointGenerator(Generator):
     canvas = None
     points = []
-    maxPoints = 6
-    pixelPerRow = 15
-    tailElementSpeedFactor = 8
     
-    def __init__(self, canvas):
+    def __init__(self, canvas, config):
         self.canvas = canvas
+        self.config = config
         
     # @jit
     def update(self, values):
         t = time.time() * 1000
-        while (len(self.points) < self.maxPoints):
+        while (len(self.points) < self.config['maxPoints']):
             # if (values[9] < 30):
             #    break
             
-            point = Point(randint(0, self.pixelPerRow), 0)
-            point.speed = randint(1, 10)
+            point = Point(randint(0, self.config['pixelPerRow']), 0)
+            point.speed = randint(self.config['minSpeed'], self.config['maxSpeed'])
             point.color = [random(), random(), random()]
             point.lastUpdate = t
             self.points.append([point])
@@ -84,8 +82,8 @@ class FloatingPointGenerator(Generator):
                     tailPoint = Point(point.pos, point.brightness)
                     tailPoint.lastUpdate = t
                     tailPoint.color = point.color
-                    tailPoint.speed = -1 * point.speed / self.tailElementSpeedFactor
-                    point.pos = point.pos + self.pixelPerRow + randint(-1, 1)
+                    tailPoint.speed = -1 * point.speed / self.config['tailElementSpeedFactor']
+                    point.pos = point.pos + self.config['pixelPerRow'] + randint(-1, 1)
                     point.brightness = 0
                     pointArr.append(tailPoint)
                     

@@ -158,7 +158,11 @@ def start():
     
     # set up imageBasedGenerator
     # generators.append(ImageBasedGenerator(canvas, [PointGenerator()], False))
-    generators.append(FloatingPointGenerator(canvas))
+    generators.append(FloatingPointGenerator(canvas, {'maxPoints' : 6,
+                                                      'pixelPerRow' : 15,
+                                                      'tailElementSpeedFactor' : 8,
+                                                      'minSpeed' : 1,
+                                                      'maxSpeed' : 10}))
     generators.append(ImageBasedGenerator("bar.png", canvas, [RotatingGenerator(20), ZoomingGenerator(0.2, 1, 1.5)], False))
     generators.append(LavaGenerator(canvas, {'color' : {'r' : 0, 'g' : 0, 'b' : 255}}))
     generators.append(AnalyzerGenerator(canvas, {'color' : {'r' : 0, 'g' : 0, 'b' : 255}}))
@@ -234,7 +238,7 @@ def start():
 
 
 if __name__ == '__main__':
-    config = {'generatorIndex' : 3, 'generators' : [],
+    config = {'generatorIndex' : 0, 'generators' : [],
               'renderers' : [],
               'brightness' : 50,
               'active' : True}
