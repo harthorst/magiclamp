@@ -55,19 +55,27 @@ def setConfig():
     return jsonify(request.json)
 
 @app.route('/generatorConfig/')
-@app.route('/generatorConfig/<int:generatorId>')
-def getGeneratorConfig(generatorId=None):
-    if (generatorId == None):
+@app.route('/generatorConfig/<int:generatorIndex>')
+def getGeneratorConfig(generatorIndex=None):
+    if (generatorIndex == None):
         result = {}
     
-        for generator in config['generators']:
+        for generatorIndex in range(len(config['generators'])):
+            generator = config['generators'][generatorIndex]
             generatorName = generator.config['name']
-            result[generatorName] = generator.config
-            result[generatorName]['hash'] = generator.getHash()
+            result[generatorName] = getGeneratorConfig(generatorIndex)
         
         return jsonify(result)
     else:
-        return jsonify(config['generators'][generatorId].config)
+        return jsonify(getGeneratorConfig(generatorIndex))
+    
+def getGeneratorConfig(generatorIndex):
+    generator = config['generators'][generatorIndex]
+    result = generator.config
+    result['hash'] = generator.getHash()
+    result['generatorIndex'] = generatorIndex
+    
+    return result
 
 @app.route('/generatorConfig/<int:generatorId>', methods=['PUT'])
 def setGeneratorConfig(generatorId=None):
