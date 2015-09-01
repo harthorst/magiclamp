@@ -16,6 +16,9 @@ except:
 
 class Generator:
     config = {}
+    
+    def getHash(self):
+        return self.__class__.__name__
 
 class AnalyzerGenerator(Generator):
     canvas = None
@@ -140,8 +143,9 @@ class LavaGenerator(Generator):
           
 class RainbowGenerator(Generator):
     canvas = None
-    def __init__(self, canvas):
+    def __init__(self, canvas, config):
         self.canvas = canvas
+        self.config = config
         
     # @jit
     def update(self, values):
@@ -201,14 +205,14 @@ class ImageBasedGenerator(Generator):
         self.win.create_image(im.size[0] / 2, im.size[1] / 2, image=tkImg)
         self.win.flush()
         
-    def __init__(self, imagePath, canvas, generators, showPreview=False):
+    def __init__(self, imagePath, canvas, generators, config):
         self.canvas = canvas
-        self.showPreview = showPreview
         self.generators = generators
         self.im = Image.open(imagePath)
+        self.config = config
         # self.im = Image.new("RGB", (290, 250))
         
-        if (showPreview):
+        if (self.config['showPreview']):
             self.win = GraphWin('Preview', self.im.size[0], self.im.size[1])  # give title and dimensions
             self.win.autoflush = False
 
@@ -225,7 +229,7 @@ class ImageBasedGenerator(Generator):
         # p1.join()
         self.getPixelValue(self.canvas.pixels, im)
                         
-        if (self.showPreview):
+        if (self.config['showPreview']):
             self.drawPIL(im)
             
     # @jit

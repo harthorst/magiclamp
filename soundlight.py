@@ -54,9 +54,20 @@ def setConfig():
         
     return jsonify(request.json)
 
+@app.route('/generatorConfig/')
 @app.route('/generatorConfig/<int:generatorId>')
 def getGeneratorConfig(generatorId=None):
-    return jsonify(config['generators'][generatorId].config)
+    if (generatorId == None):
+        result = {}
+    
+        for generator in config['generators']:
+            generatorName = generator.config['name']
+            result[generatorName] = generator.config
+            result[generatorName]['hash'] = generator.getHash()
+        
+        return jsonify(result)
+    else:
+        return jsonify(config['generators'][generatorId].config)
 
 @app.route('/generatorConfig/<int:generatorId>', methods=['PUT'])
 def setGeneratorConfig(generatorId=None):
@@ -158,15 +169,30 @@ def start():
     
     # set up imageBasedGenerator
     # generators.append(ImageBasedGenerator(canvas, [PointGenerator()], False))
-    generators.append(FloatingPointGenerator(canvas, {'maxPoints' : 6,
-                                                      'pixelPerRow' : 15,
-                                                      'tailElementSpeedFactor' : 8,
-                                                      'minSpeed' : 1,
-                                                      'maxSpeed' : 10}))
-    generators.append(ImageBasedGenerator("bar.png", canvas, [RotatingGenerator(20), ZoomingGenerator(0.2, 1, 1.5)], False))
-    generators.append(LavaGenerator(canvas, {'color' : {'r' : 0, 'g' : 0, 'b' : 255}}))
-    generators.append(AnalyzerGenerator(canvas, {'color' : {'r' : 0, 'g' : 0, 'b' : 255}}))
-    generators.append(RainbowGenerator(canvas))
+    generators.append(FloatingPointGenerator(canvas,
+                      {
+                      'name' : 'FloatingPointGenerator1',
+                      'maxPoints' : 6,
+                      'pixelPerRow' : 15,
+                      'tailElementSpeedFactor' : 8,
+                      'minSpeed' : 1,
+                      'maxSpeed' : 10}))
+    generators.append(ImageBasedGenerator("bar.png", canvas, [RotatingGenerator(20), ZoomingGenerator(0.2, 1, 1.5)],
+                      {
+                      'name' : 'ImageBasedGenerator1',
+                      'showPreview' : False}))
+    generators.append(LavaGenerator(canvas,
+                      {
+                      'name' : 'LavaGenerator1',
+                      'color' : {'r' : 0, 'g' : 0, 'b' : 255}}))
+    generators.append(AnalyzerGenerator(canvas,
+                      {
+                      'name' : 'AnalyzerGenerator1',
+                      'color' : {'r' : 0, 'g' : 0, 'b' : 255}}))
+    generators.append(RainbowGenerator(canvas,
+                      {
+                      'name' : 'RainbowGenerator1'
+                      }))
     
     config['generators'] = generators
         
