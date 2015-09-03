@@ -5,18 +5,15 @@ import android.app.Activity;
 import android.app.ActionBar;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.content.Context;
-import android.os.Build;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
+
+import de.tf.magiclamp.generator.GeneratorListFragment;
 
 public class MainActivityWithDrawer extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks{
@@ -53,12 +50,12 @@ public class MainActivityWithDrawer extends Activity
         switch (position) {
             case 0:
                 fragmentManager.beginTransaction()
-                        .replace(R.id.container, HomeFragment.newInstance())
+                        .replace(R.id.container, HomeFragment.newInstance()).addToBackStack("")
                         .commit();
                 break;
             case 1:
                 fragmentManager.beginTransaction()
-                        .replace(R.id.container, GeneratorListFragment.newInstance())
+                        .replace(R.id.container, GeneratorListFragment.newInstance()).addToBackStack("")
                         .commit();
                 break;
             default:

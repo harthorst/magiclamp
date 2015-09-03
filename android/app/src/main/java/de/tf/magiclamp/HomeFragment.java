@@ -33,7 +33,7 @@ public class HomeFragment extends Fragment {
     String TAG = "HomeFragment";
     public static LampConfig lampConfig = new LampConfig();
 
-    MagicLampService service;
+    public static MagicLampService service;
 
     @Bind(R.id.nextButton)
     ImageButton nextButton;

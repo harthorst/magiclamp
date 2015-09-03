@@ -22,6 +22,9 @@ public interface MagicLampService {
     @GET("/config")
     public void getConfig(Callback<LampConfig> c);
 
+    @GET("/generatorConfig")
+    public void getGeneratorConfigList(Callback<Map> c);
+
     @GET("/generatorConfig/{id}")
     public void getGeneratorConfig(@Path("id") int id, Callback<Map> c);
 

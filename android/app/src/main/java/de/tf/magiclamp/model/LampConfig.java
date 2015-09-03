@@ -8,6 +8,16 @@ public class LampConfig {
 
     private boolean active;
 
+    private int generatorIndex;
+
+    public int getGeneratorIndex() {
+        return generatorIndex;
+    }
+
+    public void setGeneratorIndex(int generatorIndex) {
+        this.generatorIndex = generatorIndex;
+    }
+
     public boolean getActive() {
         return active;
     }
