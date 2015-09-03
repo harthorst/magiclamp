@@ -19,7 +19,6 @@ import de.tf.magiclamp.Constants;
 import de.tf.magiclamp.MagicLampService;
 import de.tf.magiclamp.R;
 import de.tf.magiclamp.model.GeneratorConfig;
-import de.tf.magiclamp.model.GeneratorListAdapter;
 import retrofit.Callback;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
@@ -79,7 +78,7 @@ public class GeneratorListFragment extends Fragment implements AbsListView.OnIte
 
         final List<GeneratorConfig> gc = new ArrayList<GeneratorConfig>();
         // specify an adapter (see also next example)
-        mAdapter = new GeneratorListAdapter(gc);
+        mAdapter = new GeneratorListAdapter(gc, this.getActivity().getApplicationContext());
         mRecyclerView.setAdapter(mAdapter);
 
         final Activity activity = getActivity();

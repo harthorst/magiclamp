@@ -4,7 +4,34 @@
     tools:context="de.tf.magiclamp.generator.FloatingPointGeneratorConfig">
 
     <!-- TODO: Update blank fragment layout -->
-    <TextView android:layout_width="match_parent" android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_horizontal|top">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="max speed"
+                android:id="@+id/textView"
+                android:layout_gravity="left|top" />
+
+            <SeekBar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/seekBar_maxSpeed"
+                android:layout_gravity="right"
+                android:max="30" />
+
+        </LinearLayout>
+    </LinearLayout>
 
 </FrameLayout>
