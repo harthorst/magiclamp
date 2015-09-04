@@ -121,7 +121,7 @@ public class HomeFragment extends Fragment {
 
                     @Override
                     public void failure(RetrofitError error) {
-                        Log.d(TAG, "setConfig() failed " + error);
+                        Log.e(TAG, "setConfig() failed " + error);
                     }
                 });
             }
