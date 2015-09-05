@@ -11,6 +11,8 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 
+import java.util.Map;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import de.tf.magiclamp.model.LampConfig;
@@ -31,7 +33,9 @@ import retrofit.client.Response;
 public class HomeFragment extends Fragment {
 
     String TAG = "HomeFragment";
-    public static LampConfig lampConfig = new LampConfig();
+    public static LampConfig lampConfig;
+
+    private Map generatorConfig;
 
     public static MagicLampService service;
 
@@ -95,7 +99,7 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void success(LampConfig lampConfig, Response response) {
-                MainActivity.lampConfig = lampConfig;
+                HomeFragment.lampConfig = lampConfig;
                 brightnessBar.setProgress(100 * lampConfig.getBrightness() / 255);
             }
 
@@ -104,10 +108,24 @@ public class HomeFragment extends Fragment {
                 Log.d(TAG, "getConfig() failed " + error);
             }
         });
+        service.getGeneratorConfigList(new Callback<Map>() {
+            @Override
+            public void success(Map map, Response response) {
+                generatorConfig = map;
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+
+            }
+        });
 
         brightnessBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (lampConfig == null) {
+                    return;
+                }
                 Log.d(TAG, "setting brightness to " + progress + "%");
                 LampConfig config = lampConfig;
                 config.setBrightness(255 * progress / 100);
@@ -116,7 +134,7 @@ public class HomeFragment extends Fragment {
 
                     @Override
                     public void success(LampConfig aBoolean, Response response) {
-                        Log.d(TAG, "setConfig() called");
+                        Log.d(TAG, "setConfig() called " + lampConfig);
                     }
 
                     @Override
@@ -161,21 +179,31 @@ public class HomeFragment extends Fragment {
 
 
     public void nextGenerator() {
-        service.next(new Callback<Boolean>() {
+        int generatorCount = generatorConfig.size();
+        int newGeneratorIndex = lampConfig.getGeneratorIndex() + 1;
+        if (newGeneratorIndex>=generatorCount) {
+            newGeneratorIndex = 0;
+        }
 
+        this.lampConfig.setGeneratorIndex(newGeneratorIndex);
+
+        service.setConfig(this.lampConfig, new Callback<LampConfig>() {
             @Override
-            public void success(Boolean aBoolean, Response response) {
+            public void success(LampConfig lampConfig, Response response) {
                 Log.d(TAG, "next() called");
             }
 
             @Override
             public void failure(RetrofitError error) {
-                Log.d(TAG, "next() failed");
+                Log.e(TAG, "next() failed", error);
             }
         });
     }
 
     public void switchPower() {
+        if (lampConfig==null) {
+            return;
+        }
 
         lampConfig.setActive(!lampConfig.getActive());
 
