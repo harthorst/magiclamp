@@ -97,6 +97,7 @@ public class GeneratorListFragment extends Fragment implements AbsListView.OnIte
                     Map itemMap = (Map) item;
                     config.setName(itemMap.get("name").toString());
                     config.setGeneratorIndex((int) Double.parseDouble(itemMap.get("generatorIndex").toString()));
+                    config.setHash(itemMap.get("hash").toString());
 
                     gc.add(config);
                 }

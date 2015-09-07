@@ -25,66 +25,47 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="min speed"
+                android:text="red"
                 android:id="@+id/textView4" />
 
             <SeekBar
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/seekBarMinSpeed" />
+                android:max="255"
+                android:id="@+id/seekBarRed" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="max speed"
+                android:text="green"
                 android:id="@+id/textView"
                 android:layout_gravity="left|top" />
 
             <SeekBar
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/seekBarMaxSpeed"
+                android:id="@+id/seekBarGreen"
+                android:max="255"
                 android:layout_gravity="right" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="tail length"
+                android:text="blue"
                 android:id="@+id/textView5" />
 
             <SeekBar
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/seekBarTailLength" />
+                android:max="255"
+                android:id="@+id/seekBarBlue" />
 
         </LinearLayout>
         </android.support.v7.widget.CardView>
 
-    <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        style="@style/CardView.Config">
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="15dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="number of points"
-                android:id="@+id/textView3" />
-
-            <SeekBar
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/seekBarMaxPoints" />
-
-        </LinearLayout>
-    </android.support.v7.widget.CardView>
     </LinearLayout>
 
 

@@ -2,6 +2,7 @@ package de.tf.magiclamp.generator;
 
 import android.app.Activity;
 import android.app.Application;
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.support.v7.widget.CardView;
@@ -13,7 +14,9 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -32,6 +35,7 @@ public class GeneratorListAdapter extends RecyclerView.Adapter<GeneratorListAdap
     private List<GeneratorConfig> values;
     private Context context;
     String TAG = "GeneratorListAdapter";
+    private Map<Integer, Fragment> fragments;
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -51,10 +55,29 @@ public class GeneratorListAdapter extends RecyclerView.Adapter<GeneratorListAdap
         }
     }
 
-    public GeneratorListAdapter(List<GeneratorConfig> values, Context context) {
+    public GeneratorListAdapter(final List<GeneratorConfig> values, Context context) {
         this.values = values;
         this.context = context;
+        final Map<Integer, Fragment> fragments = new HashMap<Integer, Fragment>();
+        this.fragments = fragments;
+
+
+        this.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+                for (GeneratorConfig config: values) {
+                    if (config.getHash().equals("FloatingPointGenerator")) {
+                        fragments.put(config.getGeneratorIndex(), FloatingPointGeneratorConfigFragment.newInstance(config.getGeneratorIndex()));
+                    } else if (config.getHash().equals("LavaGenerator")) {
+                        fragments.put(config.getGeneratorIndex(), RGBConfigFragment.newInstance(config.getGeneratorIndex()));
+                    }
+                }
+            }
+        });
     }
+
+
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
@@ -95,13 +118,21 @@ public class GeneratorListAdapter extends RecyclerView.Adapter<GeneratorListAdap
                 adapter.notifyDataSetChanged();
             }
         });
+        holder.mTextView.setTag(position);
         holder.mTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                GeneratorConfig config = values.get((Integer)v.getTag());
                 Activity activity = (Activity) v.getContext();
+
+                Fragment f = fragments.get(config.getGeneratorIndex());
+                if (f==null) {
+                    return;
+                }
+
                 FragmentManager fragmentManager = activity.getFragmentManager();
                 fragmentManager.beginTransaction()
-                        .replace(R.id.container, FloatingPointGeneratorConfigFragment.newInstance("", "")).addToBackStack("")
+                        .replace(R.id.container, f).addToBackStack("")
                         .commit();
             }
         });

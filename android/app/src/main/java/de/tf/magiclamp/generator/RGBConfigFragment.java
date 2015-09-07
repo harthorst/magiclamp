@@ -1,9 +1,9 @@
 package de.tf.magiclamp.generator;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.net.Uri;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,31 +20,18 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link FloatingPointGeneratorConfig.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link FloatingPointGeneratorConfig#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class FloatingPointGeneratorConfigFragment extends Fragment {
 
-    static final int MAX_SPEED = 20;
-    static final int MAX_POINTS = 20;
-    static final int MAX_TAIL_LENGTH = 10;
+public class RGBConfigFragment extends Fragment {
+
+    static final String TAG = "RGBConfigFragment";
     static final String KEY_GENERATOR_INDEX = "generatorIndex";
 
-    static final String TAG = "FloatingPointGenConfigFrag";
-
-    @Bind(R.id.seekBarMinSpeed)
-    SeekBar seekBarMinSpeed;
-    @Bind(R.id.seekBarMaxSpeed)
-    SeekBar seekBarMaxSpeed;
-    @Bind(R.id.seekBarMaxPoints)
-    SeekBar seekBarMaxPoints;
-    @Bind(R.id.seekBarTailLength)
-    SeekBar seekBarTailLength;
+    @Bind(R.id.seekBarRed)
+    SeekBar seekBarRed;
+    @Bind(R.id.seekBarGreen)
+    SeekBar seekBarGreen;
+    @Bind(R.id.seekBarBlue)
+    SeekBar seekBarBlue;
 
     private Map generatorConfig;
 
@@ -52,18 +39,17 @@ public class FloatingPointGeneratorConfigFragment extends Fragment {
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @return A new instance of fragment FloatingPointGeneratorConfig.
+     * @return A new instance of fragment RGBConfig.
      */
-    // TODO: Rename and change types and number of parameters
-    public static FloatingPointGeneratorConfigFragment newInstance(Integer generatorIndex) {
-        FloatingPointGeneratorConfigFragment fragment = new FloatingPointGeneratorConfigFragment();
+    public static RGBConfigFragment newInstance(Integer generatorIndex) {
+        RGBConfigFragment fragment = new RGBConfigFragment();
         Bundle args = new Bundle();
         args.putInt(KEY_GENERATOR_INDEX, generatorIndex);
         fragment.setArguments(args);
         return fragment;
     }
 
-    public FloatingPointGeneratorConfigFragment() {
+    public RGBConfigFragment() {
         // Required empty public constructor
     }
 
@@ -77,7 +63,7 @@ public class FloatingPointGeneratorConfigFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
 
-        View result = inflater.inflate(R.layout.fragment_floating_point_generator_config, container, false);
+        View result = inflater.inflate(R.layout.fragment_rgb_config, container, false);
         ButterKnife.bind(this, result);
 
         return result;
@@ -92,14 +78,13 @@ public class FloatingPointGeneratorConfigFragment extends Fragment {
             @Override
             public void success(Map map, Response response) {
                 generatorConfig = map;
-                int minSpeed = ((Double) map.get("minSpeed")).intValue();
-                int maxSpeed = ((Double) map.get("maxSpeed")).intValue();
-                int maxPoints = ((Double) map.get("maxPoints")).intValue();
-                int tailLength = ((Double) map.get("tailElementSpeedFactor")).intValue();
-                seekBarMinSpeed.setProgress((minSpeed * 100) / MAX_SPEED);
-                seekBarMaxSpeed.setProgress((maxSpeed * 100) / MAX_SPEED);
-                seekBarMaxPoints.setProgress((maxPoints * 100) / MAX_POINTS);
-                seekBarTailLength.setProgress((tailLength * 100) / MAX_TAIL_LENGTH);
+                Map<String, Double> color = (Map<String, Double>)map.get("color");
+                int red = color.get("r").intValue();
+                int green = color.get("g").intValue();
+                int blue = color.get("b").intValue();
+                seekBarRed.setProgress(red);
+                seekBarGreen.setProgress(green);
+                seekBarBlue.setProgress(blue);
             }
 
             @Override
@@ -108,47 +93,7 @@ public class FloatingPointGeneratorConfigFragment extends Fragment {
             }
         });
 
-        seekBarMinSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (progress > seekBarMaxSpeed.getProgress()) {
-                    seekBarMaxSpeed.setProgress(progress);
-                }
-                updateConfig();
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-
-        seekBarMaxSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (progress < seekBarMinSpeed.getProgress()) {
-                    seekBarMinSpeed.setProgress(progress);
-                }
-                updateConfig();
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-
-        seekBarTailLength.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        seekBarRed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 updateConfig();
@@ -165,7 +110,7 @@ public class FloatingPointGeneratorConfigFragment extends Fragment {
             }
         });
 
-        seekBarMaxPoints.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        seekBarGreen.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 updateConfig();
@@ -181,13 +126,31 @@ public class FloatingPointGeneratorConfigFragment extends Fragment {
 
             }
         });
+
+        seekBarBlue.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                updateConfig();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
     }
 
     private void updateConfig() {
-        generatorConfig.put("minSpeed", seekBarMinSpeed.getProgress() * MAX_SPEED / 100);
-        generatorConfig.put("maxSpeed", seekBarMaxSpeed.getProgress() * MAX_SPEED / 100);
-        generatorConfig.put("maxPoints", seekBarMaxPoints.getProgress() * MAX_POINTS / 100);
-        generatorConfig.put("tailElementSpeedFactor", seekBarTailLength.getProgress() * MAX_TAIL_LENGTH / 100);
+        Map<String, Double> color = (Map<String, Double>)generatorConfig.get("color");
+        color.put("r", Double.valueOf(seekBarRed.getProgress()));
+        color.put("g", Double.valueOf(seekBarGreen.getProgress()));
+        color.put("b", Double.valueOf(seekBarBlue.getProgress()));
 
         int generatorIndex = this.getArguments().getInt(KEY_GENERATOR_INDEX);
         HomeFragment.service.setGeneratorConfig(generatorIndex, generatorConfig, new Callback<Map>() {

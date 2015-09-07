@@ -39,6 +39,8 @@ public class HomeFragment extends Fragment {
 
     public static MagicLampService service;
 
+    private static int MAX_BRIGHTNESS = 255;
+
     @Bind(R.id.nextButton)
     ImageButton nextButton;
 
@@ -100,7 +102,7 @@ public class HomeFragment extends Fragment {
             @Override
             public void success(LampConfig lampConfig, Response response) {
                 HomeFragment.lampConfig = lampConfig;
-                brightnessBar.setProgress(100 * lampConfig.getBrightness() / 255);
+                brightnessBar.setProgress(lampConfig.getBrightness());
             }
 
             @Override
@@ -126,9 +128,9 @@ public class HomeFragment extends Fragment {
                 if (lampConfig == null) {
                     return;
                 }
-                Log.d(TAG, "setting brightness to " + progress + "%");
+                Log.d(TAG, "setting brightness to " + progress);
                 LampConfig config = lampConfig;
-                config.setBrightness(255 * progress / 100);
+                config.setBrightness(progress);
 
                 service.setConfig(config, new Callback<LampConfig>() {
 

@@ -45,6 +45,7 @@
                     android:layout_columnSpan="3"
                     android:layout_gravity="bottom|center_vertical"
                     style="@style/AppTheme"
+                    android:max="255"
                     android:paddingBottom="100dp" />
 
                 <ImageButton
