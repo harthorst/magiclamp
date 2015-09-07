@@ -49,6 +49,7 @@ def setConfig():
     
     config['brightness'] = request.json['brightness']
     config['active'] = request.json['active']
+    config['generatorIndex'] = request.json['generatorIndex']
     
     updateConfig();
         
@@ -111,15 +112,8 @@ def updateConfig():
         renderer.setBrightness(brightness)
         
     if (config['active'] == False):
-        for pixel in config['canvas'].pixels:
-            pixel.color.r = 0
-            pixel.color.g = 0
-            pixel.color.b = 0
+        clear()
         
-        for renderer in config['renderers']:
-            renderer.update()
-
-
 
 def initMLCanvas():
         numLeds = 240
@@ -154,6 +148,20 @@ def initMLCanvas():
         
         return canvas
     
+def clear():
+    graph.lock.acquire()
+    
+    for pixel in config['canvas'].pixels:
+        color = pixel.color
+        color.r = 0
+        color.g = 0
+        color.b = 0    
+        
+    for renderer in config['renderers']:
+        renderer.update()
+        
+    graph.lock.release()
+
 def startAnalyzer():
     global analyzerStat
     analyzerStat = mp.Array('i', [0] * analyzer.LEVELS)
@@ -204,6 +212,7 @@ def start():
     
     config['generators'] = generators
         
+    global graph
     graph = Graph(renderers, [generators[2], generators[0]])
     
     updateConfig()
@@ -231,22 +240,21 @@ def start():
                 
                 # clear canvas if generator changes
                 if (lastIndex != config['generatorIndex']):
-                    for pixel in config['canvas'].pixels:
-                        color = pixel.color
-                        color.r = 0
-                        color.g = 0
-                        color.b = 0
+                    clear()
                         
                     lastIndex = config['generatorIndex']
     
                     graph.generators = [generators[config['generatorIndex']]]
                 
+                graph.lock.acquire()
                 graph.update(analyzerStat)
+                graph.lock.release()
+                
                 now = time.time()
                 iterations += 1
                 
                 # TODO: different process
-                time.sleep(0.003)
+                time.sleep(0.005)
                 
                 if (now - lastTime > 1):
                     print "%s fps" % (iterations)

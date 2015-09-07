@@ -66,7 +66,7 @@ class FloatingPointGenerator(Generator):
             #    break
             
             point = Point(randint(0, self.config['pixelPerRow']), 0)
-            point.speed = randint(self.config['minSpeed'], self.config['maxSpeed'])
+            point.speed = numpy.maximum(1,randint(self.config['minSpeed'], self.config['maxSpeed']))
             point.color = [random(), random(), random()]
             point.lastUpdate = t
             self.points.append([point])
@@ -86,7 +86,7 @@ class FloatingPointGenerator(Generator):
                     tailPoint.lastUpdate = t
                     tailPoint.color = point.color
                     tailPoint.speed = -1 * point.speed / self.config['tailElementSpeedFactor']
-                    point.pos = point.pos + self.config['pixelPerRow'] + randint(-1, 1)
+                    point.pos = point.pos + int(self.config['pixelPerRow']) + randint(-1, 1)
                     point.brightness = 0
                     pointArr.append(tailPoint)
                     

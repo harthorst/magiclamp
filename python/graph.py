@@ -1,6 +1,7 @@
 from PIL import Image, ImageDraw, ImageTk, ImageStat
 import numpy
 from random import randint
+from threading import Lock
 import time
 
 from lmgraphics.pointgenerator import PointGenerator
@@ -9,8 +10,8 @@ from magiclamp import *
 
 renderers = None
 
-
 class Graph:
+    lock = Lock()
     strip = None
     renderers = []
     generators = []
