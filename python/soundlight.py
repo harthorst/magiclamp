@@ -151,11 +151,7 @@ def initMLCanvas():
 def clear():
     graph.lock.acquire()
     
-    for pixel in config['canvas'].pixels:
-        color = pixel.color
-        color.r = 0
-        color.g = 0
-        color.b = 0    
+    config['canvas'].clear()
         
     for renderer in config['renderers']:
         renderer.update()
@@ -193,6 +189,16 @@ def start():
                       'tailElementSpeedFactor' : 8,
                       'minSpeed' : 1,
                       'maxSpeed' : 10}))
+    generators.append(StarGenerator(canvas,
+                      {
+                      'name' : 'StarGenerator1',
+                      'maxPoints' : 6,
+                      'maxPointSize' : 4,
+                      'maxRespawnTime' : 5000,
+                      'pixelPerRow' : 15,
+                      'minSpeed' : 5,
+                      'maxSpeed' : 5
+                      }))
     generators.append(ImageBasedGenerator("bar.png", canvas, [RotatingGenerator(20), ZoomingGenerator(0.2, 1, 1.5)],
                       {
                       'name' : 'ImageBasedGenerator1',

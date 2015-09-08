@@ -1,4 +1,5 @@
 from PIL import Image, ImageDraw, ImageTk, ImageStat
+import copy
 import math
 import numpy
 from random import randint, random
@@ -14,8 +15,9 @@ except:
     pass
 
 
-class Generator:
+class Generator(object):
     config = {}
+    canvas = None
     
     def getHash(self):
         return self.__class__.__name__
@@ -50,8 +52,15 @@ class AnalyzerGenerator(Generator):
             pixel.color.g = val * 0
             pixel.color.b = val * 0
             
-class FloatingPointGenerator(Generator):
-    canvas = None
+class PointGenerator(Generator):
+    def setPoint(self, point):
+        # print point.pos, point.brightness
+        c = self.canvas.pixels[point.pos].color
+        c.r = point.color[0] * point.brightness
+        c.g = point.color[1] * point.brightness
+        c.b = point.color[2] * point.brightness  
+        
+class FloatingPointGenerator(PointGenerator):
     points = []
     
     def __init__(self, canvas, config):
@@ -66,7 +75,7 @@ class FloatingPointGenerator(Generator):
             #    break
             
             point = Point(randint(0, self.config['pixelPerRow']), 0)
-            point.speed = numpy.maximum(1,randint(self.config['minSpeed'], self.config['maxSpeed']))
+            point.speed = numpy.maximum(1, randint(self.config['minSpeed'], self.config['maxSpeed']))
             point.color = [random(), random(), random()]
             point.lastUpdate = t
             self.points.append([point])
@@ -104,15 +113,68 @@ class FloatingPointGenerator(Generator):
                 # remove empty points
                 if (len(pointArr) == 0):
                     self.points.remove(pointArr)
-                
-    # @jit
-    def setPoint(self, point):
-        c = self.canvas.pixels[point.pos].color
-        c.r = point.color[0] * point.brightness
-        c.g = point.color[1] * point.brightness
-        c.b = point.color[2] * point.brightness
         
-        # map(self.setPoint, point.tailPoints)
+class StarGenerator(PointGenerator):
+    canvas = None
+    points = []
+    nextPointGenerationTime = -1
+    
+    def __init__(self, canvas, config):
+        self.canvas = canvas
+        self.config = config
+        
+    def update(self, values):
+        self.canvas.clear()
+        
+        t = time.time() * 1000
+        
+        while (self.nextPointGenerationTime < t and len(self.points) < self.config['maxPoints']):
+            point = Point(randint(0, len(self.canvas.pixels)), 0)
+            # point.speed = numpy.maximum(1, randint(self.config['minSpeed'], self.config['maxSpeed']))
+            point.color = [1, 1, 1]
+            point.maxBrightness = randint(1, 255)
+            point.speed = numpy.maximum(1, 2 * point.maxBrightness / 255)
+            # point.size = randint(1, self.maxPointSize)
+            point.size = randint(1, self.config['maxPointSize'])
+            
+            point.lastUpdate = t
+            
+            self.points.append(point)
+            
+            self.nextPointGenerationTime = t + randint(0, self.config['maxRespawnTime'])
+            
+        for point in self.points:
+            if (point.speed > 0):
+                if (point.brightness < point.maxBrightness):
+                    point.brightness = numpy.minimum(point.maxBrightness, point.brightness + (t - point.lastUpdate) * point.speed / 2)
+                else:
+                    point.speed = -1 * point.speed
+            else:
+                point.brightness = numpy.maximum(-1, point.brightness + (t - point.lastUpdate) * point.speed / 2)
+                
+            point.lastUpdate = t
+                
+            if (point.brightness < 0):
+                self.points.remove(point)
+            else:                
+                self.setPoint(point)
+            
+    def setPoint(self, point):
+        tmpPoint = copy.deepcopy(point)
+        tmpPoint.brightness = int(numpy.minimum(255, point.brightness))
+        super(StarGenerator, self).setPoint(tmpPoint)
+        
+        if (point.brightness == 0):
+            return
+            
+        for i in range(1, point.size):
+            tmpPoint.brightness = int(point.brightness / (i * 10))
+            
+            for k in [i, -i, i * self.config['pixelPerRow'], -i * self.config['pixelPerRow']]:
+                tmpPoint.pos = int(point.pos + k)
+                
+                if (tmpPoint.pos >= 0 and tmpPoint.pos < len(self.canvas.pixels)):
+                    super(self.__class__, self).setPoint(tmpPoint)
         
 class Point:
     brightness = 255

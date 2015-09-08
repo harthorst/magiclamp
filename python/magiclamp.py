@@ -28,6 +28,14 @@ class MLCanvas:
     def __init__(self, width, height):
         self.width = width
         self.height = height
+        
+    def clear(self):
+    
+        for pixel in self.pixels:
+            color = pixel.color
+            color.r = 0
+            color.g = 0
+            color.b = 0    
       
     
     
