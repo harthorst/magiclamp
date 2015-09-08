@@ -19,7 +19,8 @@
         </activity>
         <activity
             android:name=".MainActivityWithDrawer"
-            android:label="@string/title_activity_main_activity_with_drawer" >
+            android:label="@string/title_activity_main_activity_with_drawer"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

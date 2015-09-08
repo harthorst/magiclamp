@@ -71,6 +71,8 @@ public class GeneratorListAdapter extends RecyclerView.Adapter<GeneratorListAdap
                         fragments.put(config.getGeneratorIndex(), FloatingPointGeneratorConfigFragment.newInstance(config.getGeneratorIndex()));
                     } else if (config.getHash().equals("LavaGenerator")) {
                         fragments.put(config.getGeneratorIndex(), RGBConfigFragment.newInstance(config.getGeneratorIndex()));
+                    } else if (config.getHash().equals("StarGenerator")) {
+                        fragments.put(config.getGeneratorIndex(), StarGeneratorConfigFragment.newInstance(config.getGeneratorIndex()));
                     }
                 }
             }
