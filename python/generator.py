@@ -129,7 +129,7 @@ class StarGenerator(PointGenerator):
         t = time.time() * 1000
         
         while (self.nextPointGenerationTime < t and len(self.points) < self.config['maxPoints']):
-            point = Point(randint(0, len(self.canvas.pixels)), 0)
+            point = Point(randint(0, len(self.canvas.pixels) - 1), 0)
             # point.speed = numpy.maximum(1, randint(self.config['minSpeed'], self.config['maxSpeed']))
             point.color = [1, 1, 1]
             point.maxBrightness = randint(1, 255)
